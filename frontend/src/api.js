@@ -2,11 +2,12 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:3000",
+  baseURL: "http://localhost:3000", // FastAPI backend
 });
 
+// Attach JWT token from localStorage to every request
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("t99_token");
+  const token = localStorage.getItem("token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }

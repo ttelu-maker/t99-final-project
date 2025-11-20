@@ -1,51 +1,55 @@
+// src/pages/Login.jsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
 
 export default function Login() {
-  const [username, setUsername] = useState("Tejaswini");
-  const [password, setPassword] = useState("Tejaswini");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
     setError("");
+
     try {
       const res = await api.post("/api/login", { username, password });
-      localStorage.setItem("t99_token", res.data.token);
+      localStorage.setItem("token", res.data.token);
       navigate("/dashboard");
-    } catch {
+    } catch (err) {
+      console.error(err);
       setError("Invalid credentials or server error.");
     }
-  };
+  }
 
   return (
-    <div className="login-page">
-      <h2>Login</h2>
-      <form onSubmit={handleSubmit} aria-label="Login form">
-        <div>
-          <label htmlFor="username">Username (first name)</label>
+    <main id="main" style={{ padding: "2rem" }}>
+      <h1>Login</h1>
+      <form onSubmit={handleSubmit} style={{ maxWidth: 320 }}>
+        <label>
+          Username (first name)
           <input
-            id="username"
+            type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            required
+            autoComplete="username"
           />
-        </div>
-        <div>
-          <label htmlFor="password">Password (first name)</label>
+        </label>
+        <br />
+        <label>
+          Password (first name)
           <input
-            id="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            required
+            autoComplete="current-password"
           />
-        </div>
+        </label>
+        <br />
         <button type="submit">Log in</button>
-        {error && <p role="alert">{error}</p>}
       </form>
-    </div>
+      {error && <p style={{ color: "red" }}>{error}</p>}
+    </main>
   );
 }

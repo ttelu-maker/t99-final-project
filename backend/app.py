@@ -1,3 +1,5 @@
+import hashlib
+from db import get_connection, log_login
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -56,21 +58,39 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
+def hash_password(password: str, salt: str) -> str:
+    return hashlib.sha256((salt + password).encode("utf-8")).hexdigest()
+
 @app.post("/api/login")
 def login(req: LoginRequest):
-    # 1) Check credentials first
-    if req.username != "Tejaswini" or req.password != "Tejaswini":
+    # 1) get user from database
+    conn = get_connection()
+    cur = conn.cursor(dictionary=True)
+    cur.execute("SELECT id, username, salt, password_hash FROM users WHERE username=%s", (req.username,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+
+    # 2) if user not found -> invalid
+    if not row:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    # 2) Try to log to DB, but don't break login if DB fails
+    # 3) compute hash using stored salt and given password
+    expected_hash = row["password_hash"]
+    computed_hash = hash_password(req.password, row["salt"])
+
+    if computed_hash != expected_hash:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    # 4) log login & issue JWT
     try:
         log_login(req.username)
     except Exception as e:
-        print("Error logging login to DB:", e)
+        print("Error logging login:", e)
 
-    # 3) Always create token if username/password are correct
     token = create_access_token({"sub": req.username})
     return {"token": token}
+
 
 
 @app.get("/api/summary-chart")

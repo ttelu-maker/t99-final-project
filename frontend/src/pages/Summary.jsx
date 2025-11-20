@@ -1,6 +1,7 @@
+// src/pages/Summary.jsx
 import { useEffect, useState } from "react";
 import api from "../api";
-// import your chart component here
+import SummaryChart from "../components/SummaryChart"; // your chart
 
 export default function Summary() {
   const [chartData, setChartData] = useState(null);
@@ -11,33 +12,46 @@ export default function Summary() {
 
     async function fetchChart() {
       try {
-        // 👇 IMPORTANT: use /api/summary-chart
         const res = await api.get("/api/summary-chart");
-        if (isMounted) {
-          setChartData(res.data);
-        }
+        if (isMounted) setChartData(res.data);
       } catch (err) {
         console.error("Error loading summary chart:", err);
-        if (isMounted) {
-          setError("Failed to load chart. Please try logging in again.");
-        }
+        if (isMounted) setError("Failed to load chart. Please try logging in again.");
       }
     }
 
     fetchChart();
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  if (error) return <p>{error}</p>;
-  if (!chartData) return <p>Loading chart...</p>;
-
-  // render chart with chartData here
   return (
-    <main id="main">
-      <h1>T99 Clean Energy Dashboard</h1>
-      {/* your chart component */}
-      {/* <SummaryChart chart={chartData} /> for example */}
-      <p style={{ maxWidth: "600px" }}>{chartData.source}</p>
-    </main>
+    <section className="card">
+      <h1 className="page-title">Summary</h1>
+      <p className="page-subtitle">
+        This page summarizes why perovskite–silicon tandem solar panels are an important clean-energy
+        innovation. The chart below compares the module efficiency of a conventional silicon panel
+        against the Oxford PV tandem panel using dynamic backend data.
+      </p>
+
+      {error && <p className="error-text">{error}</p>}
+      {!chartData && !error && <p>Loading chart…</p>}
+
+      {chartData && (
+        <div className="chart-section">
+          <h2 className="chart-title">{chartData.title}</h2>
+          <SummaryChart chart={chartData} />
+          <p className="chart-caption">
+            The tandem panel reaches roughly <strong>24.5%</strong> efficiency compared with around{" "}
+            <strong>20%</strong> for a typical silicon module. This means more clean electricity from
+            the same roof or land area.
+          </p>
+          <p className="helper-text">
+            Source: {chartData.source}
+          </p>
+        </div>
+      )}
+    </section>
   );
 }

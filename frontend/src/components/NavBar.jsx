@@ -1,25 +1,33 @@
-import { NavLink, useNavigate } from "react-router-dom";
+// src/components/Navbar.jsx
+import { Link, useNavigate } from "react-router-dom";
 
-export default function NavBar() {
+export default function Navbar() {
   const navigate = useNavigate();
+  const token = localStorage.getItem("token");
 
-  const handleLogout = () => {
-    localStorage.removeItem("t99_token");
+  function handleLogout() {
+    localStorage.removeItem("token");
     navigate("/login");
-  };
+  }
 
   return (
-    <header>
-      <a href="#main-content" className="skip-link">
-        Skip to main content
-      </a>
+    <header style={{ padding: "1rem 2rem", borderBottom: "1px solid #ddd" }}>
       <nav aria-label="Main navigation">
-        <h1>T99 Clean Energy Dashboard</h1>
-        <ul>
-          <li><NavLink to="/dashboard">Dashboard</NavLink></li>
-          <li><NavLink to="/summary">Summary</NavLink></li>
-          <li><NavLink to="/reports">Reports</NavLink></li>
-          <li><button onClick={handleLogout}>Logout</button></li>
+        <ul style={{ display: "flex", gap: "1.5rem", listStyle: "none", margin: 0 }}>
+          <li><strong>T99 Clean Energy Dashboard</strong></li>
+          {token && (
+            <>
+              <li><Link to="/dashboard">Dashboard</Link></li>
+              <li><Link to="/summary">Summary</Link></li>
+              <li><Link to="/reports">Reports</Link></li>
+              <li>
+                <button onClick={handleLogout}>Logout</button>
+              </li>
+            </>
+          )}
+          {!token && (
+            <li><Link to="/login">Login</Link></li>
+          )}
         </ul>
       </nav>
     </header>

@@ -1,35 +1,56 @@
+// src/pages/Reports.jsx
 import { useEffect, useState } from "react";
 import api from "../api";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import ReportsChart from "../components/ReportsChart";
 
 export default function Reports() {
   const [chart, setChart] = useState(null);
-
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    api.get("/api/reports-chart").then((res) => setChart(res.data)).catch(console.error);
+    let active = true;
+
+    async function fetchChart() {
+      try {
+        const res = await api.get("/api/reports-chart");
+        if (active) setChart(res.data);
+      } catch (err) {
+        console.error("Error loading reports chart:", err);
+        if (active) setError("Failed to load chart. Please try logging in again.");
+      }
+    }
+
+    fetchChart();
+    return () => {
+      active = false;
+    };
   }, []);
 
-  if (!chart) return <p>Loading chart...</p>;
-
   return (
-    <section aria-labelledby="reports-heading">
-      <h2 id="reports-heading">{chart.title}</h2>
-      <div style={{ width: "100%", height: 300 }}>
-        <ResponsiveContainer>
-          <LineChart data={chart.data}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="year" />
-            <YAxis label={{ value: chart.yLabel, angle: -90, position: "insideLeft" }} />
-            <Tooltip />
-            <Line type="monotone" dataKey="capacityMW" />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+    <main id="main" style={{ padding: "2rem" }}>
       <p>
-        This chart shows a scenario for how installed capacity of tandem panels could grow from 2025
-        to 2030 as production scales toward gigawatt levels.
+        The Reports page looks ahead at future adoption scenarios for tandem
+        solar panel deployment. The chart below visualizes potential scaled
+        production based on industry growth assumptions.
       </p>
-    </section>
+
+      {error && <p style={{ color: "red" }}>{error}</p>}
+      {!error && !chart && <p>Loading chart...</p>}
+
+      {chart && (
+        <>
+          <h2>{chart.title}</h2>
+          <ReportsChart chart={chart} />
+          <p style={{ marginTop: "1rem" }}>
+            Installed capacity could grow from <strong>50 MW</strong> in 2025
+            to <strong>2000 MW</strong> by 2030. These are illustrative
+            research-based projections showing a possible scale-up path.
+          </p>
+          <p>
+            <strong>Source:</strong> {chart.note}
+          </p>
+        </>
+      )}
+    </main>
   );
 }
